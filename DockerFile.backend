@@ -1,0 +1,14 @@
+# getting maven to build
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package
+
+
+# using jRE not full JDK to ensure less space usage 
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build app/target/peer-1.0-jar-with-dependencies.jar app.jar
+EXPOSE 55555
+CMD ["java", "-jar", "app.jar"]
