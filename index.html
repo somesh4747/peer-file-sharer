@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Download Zipped Files</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #f0f0f0;
+                display: flex;
+                height: 100vh;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .container {
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                text-align: center;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 16px;
+                background-color: #007bff;
+                border: none;
+                color: white;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                background-color: #0056b3;
+            }
+
+            .status {
+                margin-top: 15px;
+                color: green;
+            }
+
+            .error {
+                color: red;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Download Zipped Files</h2>
+            <button onclick="downloadZip()">Download ZIP</button>
+            <div class="status" id="status"></div>
+        </div>
+
+        <script>
+            async function downloadZip() {
+                const status = document.getElementById('status')
+                status.textContent = 'Downloading...'
+
+                try {
+                    const response = await fetch(
+                        'http://localhost:55555/download?port=52966'
+                    )
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `Server responded with ${response.status}`
+                        )
+                    }
+
+                    const blob = await response.blob()
+                    const url = window.URL.createObjectURL(blob)
+
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'files.zip'
+                    document.body.appendChild(a)
+                    a.click()
+                    a.remove()
+                    window.URL.revokeObjectURL(url)
+
+                    status.textContent = 'Download complete!'
+                    status.className = 'status'
+                } catch (error) {
+                    console.error('Error:', error)
+                    status.textContent = 'Download failed!'
+                    status.className = 'status error'
+                }
+            }
+        </script>
+    </body>
+</html>
