@@ -2,91 +2,641 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Download Zipped Files</title>
+        <title>Peer File Sharer</title>
         <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
             body {
-                font-family: Arial, sans-serif;
-                background: #f0f0f0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
                 display: flex;
-                height: 100vh;
                 justify-content: center;
                 align-items: center;
+                padding: 20px;
             }
 
             .container {
                 background: white;
-                padding: 30px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                padding: 40px;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+                max-width: 600px;
+                width: 100%;
+            }
+
+            h1 {
+                color: #333;
+                margin-bottom: 30px;
                 text-align: center;
+                font-size: 28px;
+            }
+
+            .section {
+                margin-bottom: 35px;
+            }
+
+            .section-title {
+                font-size: 18px;
+                font-weight: 600;
+                color: #667eea;
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #667eea;
+            }
+
+            .upload-area {
+                border: 3px dashed #667eea;
+                border-radius: 8px;
+                padding: 40px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                background: #f9f9f9;
+            }
+
+            .upload-area:hover {
+                background: #f0f0f0;
+                border-color: #764ba2;
+            }
+
+            .upload-area.dragover {
+                background: #e8e4f3;
+                border-color: #764ba2;
+                transform: scale(1.02);
+            }
+
+            #fileInput {
+                display: none;
+            }
+
+            .upload-icon {
+                font-size: 48px;
+                margin-bottom: 15px;
+            }
+
+            .upload-text {
+                color: #666;
+                font-size: 16px;
+            }
+
+            .upload-subtext {
+                color: #999;
+                font-size: 14px;
+                margin-top: 8px;
+            }
+
+            .file-list {
+                margin-top: 15px;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+
+            .file-item {
+                background: #f9f9f9;
+                padding: 10px;
+                margin: 5px 0;
+                border-radius: 6px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 14px;
+                color: #333;
+            }
+
+            .file-size {
+                color: #999;
+                font-size: 12px;
+            }
+
+            .remove-file {
+                background: #ff6b6b;
+                color: white;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                transition: background 0.2s ease;
+            }
+
+            .remove-file:hover {
+                background: #ff5252;
+            }
+
+            .button-group {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
             }
 
             button {
-                padding: 10px 20px;
+                flex: 1;
+                padding: 12px 24px;
                 font-size: 16px;
-                background-color: #007bff;
                 border: none;
-                color: white;
-                border-radius: 5px;
+                border-radius: 6px;
                 cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
             }
 
-            button:hover {
-                background-color: #0056b3;
+            .btn-upload {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .btn-upload:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            }
+
+            .btn-upload:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .btn-clear {
+                background: #f0f0f0;
+                color: #333;
+                border: 2px solid #ddd;
+            }
+
+            .btn-clear:hover {
+                background: #e0e0e0;
+            }
+
+            .download-section {
+                background: #f9f9f9;
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .port-input-group {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            #portInput {
+                flex: 1;
+                padding: 10px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                transition: border-color 0.3s ease;
+            }
+
+            #portInput:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+
+            .btn-download {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .btn-download:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            }
+
+            .btn-download:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
             }
 
             .status {
                 margin-top: 15px;
-                color: green;
+                padding: 12px;
+                border-radius: 6px;
+                text-align: center;
+                font-weight: 500;
+                display: none;
             }
 
-            .error {
-                color: red;
+            .status.show {
+                display: block;
+            }
+
+            .status.success {
+                background: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+            }
+
+            .status.error {
+                background: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+
+            .status.info {
+                background: #d1ecf1;
+                color: #0c5460;
+                border: 1px solid #bee5eb;
+            }
+
+            .status.loading {
+                background: #fff3cd;
+                color: #856404;
+                border: 1px solid #ffeaa7;
+            }
+
+            .progress {
+                margin-top: 15px;
+                display: none;
+            }
+
+            .progress.show {
+                display: block;
+            }
+
+            .progress-bar-bg {
+                background: #e0e0e0;
+                border-radius: 10px;
+                height: 8px;
+                overflow: hidden;
+            }
+
+            .progress-bar {
+                background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+                height: 100%;
+                width: 0%;
+                transition: width 0.3s ease;
+            }
+
+            .progress-text {
+                font-size: 12px;
+                color: #666;
+                margin-top: 5px;
+                text-align: center;
+            }
+
+            .port-response {
+                background: #e8f4f8;
+                padding: 15px;
+                border-radius: 6px;
+                margin-top: 15px;
+                display: none;
+                border-left: 4px solid #667eea;
+            }
+
+            .port-response.show {
+                display: block;
+            }
+
+            .port-label {
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 5px;
+            }
+
+            .port-value {
+                font-size: 20px;
+                font-weight: bold;
+                color: #667eea;
+                font-family: 'Courier New', monospace;
+            }
+
+            .copy-btn {
+                margin-top: 10px;
+                padding: 8px 16px;
+                background: #667eea;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                transition: background 0.2s ease;
+            }
+
+            .copy-btn:hover {
+                background: #764ba2;
+            }
+
+            @media (max-width: 600px) {
+                .container {
+                    padding: 25px;
+                }
+
+                h1 {
+                    font-size: 22px;
+                }
+
+                .button-group {
+                    flex-direction: column;
+                }
+
+                .port-input-group {
+                    flex-direction: column;
+                }
             }
         </style>
     </head>
     <body>
         <div class="container">
-            <h2>Download Zipped Files</h2>
-            <button onclick="downloadZip()">Download ZIP</button>
-            <div class="status" id="status"></div>
+            <h1>📤 Peer File Sharer</h1>
+
+            <!-- Upload Section -->
+            <div class="section">
+                <div class="section-title">📤 Upload Files</div>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to select or drag & drop files</div>
+                    <div class="upload-subtext">Share multiple files and get a port number</div>
+                    <input type="file" id="fileInput" multiple />
+                </div>
+
+                <div class="file-list" id="fileList"></div>
+
+                <div class="button-group">
+                    <button class="btn-upload" id="uploadBtn" disabled>Upload & Share</button>
+                    <button class="btn-clear" id="clearBtn">Clear All</button>
+                </div>
+
+                <div class="status" id="uploadStatus"></div>
+                <div class="progress" id="uploadProgress">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar" id="uploadProgressBar"></div>
+                    </div>
+                    <div class="progress-text" id="uploadProgressText">0%</div>
+                </div>
+
+                <div class="port-response" id="portResponse">
+                    <div class="port-label">Share this port with others to download your files:</div>
+                    <div class="port-value" id="portValue">-</div>
+                    <button class="copy-btn" onclick="copyPort()">Copy Port</button>
+                </div>
+            </div>
+
+            <!-- Download Section -->
+            <div class="section">
+                <div class="section-title">📥 Download Files</div>
+                <div class="download-section">
+                    <div style="margin-bottom: 15px; color: #666; font-size: 14px;">
+                        Enter the port number provided by the peer to download their files
+                    </div>
+
+                    <div class="port-input-group">
+                        <input 
+                            type="text" 
+                            id="portInput" 
+                            placeholder="Enter port number (e.g., 55555)"
+                            pattern="\d+"
+                        />
+                        <button class="btn-download" id="downloadBtn" onclick="downloadZip()">Download ZIP</button>
+                    </div>
+
+                    <div class="status" id="downloadStatus"></div>
+                    <div class="progress" id="downloadProgress">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar" id="downloadProgressBar"></div>
+                        </div>
+                        <div class="progress-text" id="downloadProgressText">0%</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <script>
+            const SERVER_URL = 'http://3.108.223.12';
+            let selectedFiles = [];
+
+            // Upload area event listeners
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const fileList = document.getElementById('fileList');
+            const uploadStatus = document.getElementById('uploadStatus');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const portResponse = document.getElementById('portResponse');
+
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                addFiles(files);
+            });
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', (e) => {
+                addFiles(Array.from(e.target.files));
+            });
+
+            function addFiles(files) {
+                selectedFiles = [...selectedFiles, ...files];
+                renderFileList();
+                uploadBtn.disabled = selectedFiles.length === 0;
+            }
+
+            function renderFileList() {
+                fileList.innerHTML = selectedFiles.map((file, index) => `
+                    <div class="file-item">
+                        <div>
+                            <div style="margin-bottom: 4px;">📄 ${escapeHtml(file.name)}</div>
+                            <div class="file-size">${formatFileSize(file.size)}</div>
+                        </div>
+                        <button class="remove-file" onclick="removeFile(${index})">Remove</button>
+                    </div>
+                `).join('');
+            }
+
+            function removeFile(index) {
+                selectedFiles.splice(index, 1);
+                renderFileList();
+                uploadBtn.disabled = selectedFiles.length === 0;
+            }
+
+            clearBtn.addEventListener('click', () => {
+                selectedFiles = [];
+                fileInput.value = '';
+                renderFileList();
+                uploadBtn.disabled = true;
+                portResponse.classList.remove('show');
+                uploadStatus.classList.remove('show');
+            });
+
+            async function uploadFiles() {
+                if (selectedFiles.length === 0) {
+                    showStatus(uploadStatus, 'Please select files first', 'error');
+                    return;
+                }
+
+                uploadBtn.disabled = true;
+                uploadProgress.classList.add('show');
+                uploadStatus.classList.remove('show');
+
+                try {
+                    const formData = new FormData();
+                    selectedFiles.forEach(file => {
+                        formData.append('file', file);
+                    });
+
+                    const response = await fetch(`${SERVER_URL}/upload`, {
+                        method: 'POST',
+                        body: formData,
+                        mode: 'cors',
+                        credentials: 'omit'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status ${response.status}`);
+                    }
+
+                    const text = await response.text();
+                    const port = extractPort(text);
+                    
+                    if (port) {
+                        showPortResponse(port);
+                        showStatus(uploadStatus, '✓ Files uploaded successfully!', 'success');
+                        selectedFiles = [];
+                        fileInput.value = '';
+                        renderFileList();
+                    } else {
+                        showStatus(uploadStatus, 'Failed to get port number from server', 'error');
+                    }
+
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    showStatus(uploadStatus, `Upload failed: ${error.message}`, 'error');
+                } finally {
+                    uploadProgress.classList.remove('show');
+                    uploadBtn.disabled = selectedFiles.length === 0;
+                }
+            }
+
             async function downloadZip() {
-                const status = document.getElementById('status')
-                status.textContent = 'Downloading...'
+                const port = document.getElementById('portInput').value.trim();
+                const downloadBtn = document.getElementById('downloadBtn');
+                const downloadStatus = document.getElementById('downloadStatus');
+                const downloadProgress = document.getElementById('downloadProgress');
+
+                if (!port) {
+                    showStatus(downloadStatus, 'Please enter a port number', 'error');
+                    return;
+                }
+
+                if (!/^\d+$/.test(port)) {
+                    showStatus(downloadStatus, 'Port must be a valid number', 'error');
+                    return;
+                }
+
+                downloadBtn.disabled = true;
+                downloadProgress.classList.add('show');
+                downloadStatus.classList.remove('show');
 
                 try {
                     const response = await fetch(
-                        'http://localhost:55555/download?port=64005'
-                    )
+                        `${SERVER_URL}/download?port=${port}`
+                    );
 
                     if (!response.ok) {
-                        throw new Error(
-                            `Server responded with ${response.status}`
-                        )
+                        throw new Error(`Server responded with status ${response.status}`);
                     }
 
-                    const blob = await response.blob()
-                    const url = window.URL.createObjectURL(blob)
+                    const blob = await response.blob();
+                    
+                    // Create download link
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `shared-files-${Date.now()}.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
 
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = 'files.zip'
-                    document.body.appendChild(a)
-                    a.click()
-                    a.remove()
-                    window.URL.revokeObjectURL(url)
+                    showStatus(downloadStatus, '✓ Download complete!', 'success');
+                    updateProgress(downloadProgress, 100);
 
-                    status.textContent = 'Download complete!'
-                    status.className = 'status'
                 } catch (error) {
-                    console.error('Error:', error)
-                    status.textContent = 'Download failed!'
-                    status.className = 'status error'
+                    console.error('Download error:', error);
+                    showStatus(downloadStatus, `Download failed: ${error.message}`, 'error');
+                } finally {
+                    downloadBtn.disabled = false;
+                    setTimeout(() => {
+                        downloadProgress.classList.remove('show');
+                    }, 2000);
                 }
             }
+
+            function extractPort(response) {
+                // Try to extract port number from response
+                const match = response.match(/\d{4,5}/);
+                return match ? match[0] : null;
+            }
+
+            function showPortResponse(port) {
+                document.getElementById('portValue').textContent = port;
+                portResponse.classList.add('show');
+            }
+
+            function copyPort() {
+                const port = document.getElementById('portValue').textContent;
+                navigator.clipboard.writeText(port).then(() => {
+                    const btn = event.target;
+                    const originalText = btn.textContent;
+                    btn.textContent = '✓ Copied!';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                    }, 2000);
+                });
+            }
+
+            function showStatus(element, message, type) {
+                element.textContent = message;
+                element.className = `status show ${type}`;
+            }
+
+            function updateProgress(progressElement, percent) {
+                const progressBar = progressElement.querySelector('.progress-bar');
+                const progressText = progressElement.querySelector('.progress-text');
+                progressBar.style.width = percent + '%';
+                progressText.textContent = percent + '%';
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            function escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, m => map[m]);
+            }
+
+            // Upload button event listener
+            uploadBtn.addEventListener('click', uploadFiles);
+
+            // Initialize
+            renderFileList();
         </script>
     </body>
 </html>
